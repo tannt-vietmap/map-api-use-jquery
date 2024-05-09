@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrix</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <style>
+        #map {
+            width: 800px;
+            height: 600px;
+        }
+
+        .search {
+            padding: 1rem 0;
+            width: 800px;
+        }
+
+        #search-box {
+            width: 100%;
+        }
+
+        .flex-column {
+            display: flex;
+            flex-direction: column;
+        }
+        #result{
+            position:absolute;
+            top: 40px;
+            left: 10px;
+            display: none;
+            background-color: #fff;
+            max-height: 300px;
+            overflow:auto;
+            z-index: 9999;
+            width: 800px;
+            padding: 1rem 0;
+        }
+       
+       .autocomplete-items > div{
+            padding: 5px;
+            cursor: pointer;
+       }
+    </style>
+</head>
+
+<body>
+    <div class="search flex-column">
+        <input type="text" id="search-box" onkeyup="searchText()">
+        <div class="result" id="result">
+
+        </div>
+    </div>
+    <div id="map"></div>
+    <script>
+        const key = '';
+        
+        var map = L.map('map').setView([10, 106], 9);
+        L.tileLayer('https://maps.vietmap.vn/api/tm/{z}/{x}/{y}@2x.png?apikey=' + key, {
+            maxZoom: 19,
+
+        }).addTo(map);
+
+        
+        function searchText(e) {
+            let elm = document.getElementById("search-box");
+            let text = elm.value;
+            $.ajax({
+                url: `https://maps.vietmap.vn/api/autocomplete/v3?apikey=${key}&text=${text}&layers=ADDRESS`,
+                method: "GET",
+                success: function (result) {
+                    const data = result;
+                    console.log(data);
+                    if (data.length > 0) {
+                        let resultElm = document.getElementById('result');
+                        a = document.createElement("DIV");
+                        a.setAttribute("id", this.id + "autocomplete-list");
+                        a.setAttribute("class", "autocomplete-items");
+                       
+                        /*append the DIV element as a child of the autocomplete container:*/
+                       
+                        /*for each item in the array...*/
+                        for (i = 0; i < data.length; i++) {
+                            /*check if the item starts with the same letters as the text field value:*/
+                            b = document.createElement("DIV");
+                                /*make the matching letters bold:*/
+                                b.innerHTML = "<strong>" + data[i].address+ "</strong>";
+                                b.innerHTML += "<input type='hidden' value='" +JSON.stringify(data[i])  + "'>";
+                                b.addEventListener("click", function (e) {
+                                    /*insert the value for the autocomplete text field:*/
+                                    var inp
+                                    inp = this.getElementsByTagName("input")[0].value;
+                                    const value = JSON.parse(inp);
+                                    console.log(JSON.parse(inp) );
+                                    getPlace(value.ref_id)
+                                    elm.value = value.address
+                                    closeAllLists();
+                                });
+                                a.appendChild(b);
+                        }
+                        resultElm.appendChild(a);
+                        resultElm.style.display ="block"
+                    }
+                }
+            });
+        }
+        function getPlace(refId){
+            $.ajax({
+                url: `https://maps.vietmap.vn/api/place/v3?apikey=${key}&refid=${refId}`,
+                method: "GET",
+                success: function (result) {
+                    const data = result;
+                    console.log(data);
+                   //add marker to map
+                   const latlng = [data.lat,data.lng];
+                   const marker = L.marker(latlng).addTo(map)
+                   map.panTo(latlng);
+                }
+            });
+        }
+        function closeAllLists(){
+            let resultElm = document.getElementById('result');
+            resultElm.style.display = 'none';
+        }
+    </script>
+</body>
+
+</html>

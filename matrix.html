@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrix</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <style>
+        #map {
+            width: 800px;
+            height: 600px;
+        }
+
+        .table {
+            width: 300px;
+        }
+        .flex-row{
+            display: flex;
+            flex-direction: row;
+        }
+        h4{
+            margin:0
+        }
+        tr td{
+            border: solid 1px #cdcdcd;
+            padding:4px 1rem;
+            white-space: nowrap;
+        }
+        tbody tr:first-child td{
+            font-weight: bold;
+            background-color:#cdcdcd;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="flex flex-row">
+        <div id="map"></div>
+        <div class="table" id="table">
+            
+            <div id="table-1"></div>
+            
+            <div id="table-2"></div>
+        </div>
+    </div>
+
+
+    <script>
+        const key = '';
+
+        var map = L.map('map').setView([15.93829498370334, 106.31359286606312], 5);
+        L.tileLayer('https://maps.vietmap.vn/api/tm/{z}/{x}/{y}@2x.png?apikey=' + key, {
+            maxZoom: 19,
+
+        }).addTo(map);
+
+        const sources = [
+            [20.93829498370334, 106.31359286606312],
+            [20.937731, 106.2880954]
+        ]
+        const destinations = [
+            [10.846782687783872, 106.78063854904616],
+            [10.826297759486991, 106.72313198776595],
+            [10.82172487739191, 106.70935950759956]
+        ]
+        function getMatrix() {
+            $.ajax({
+                url: `https://maps.vietmap.vn/api/matrix?api-version=1.1&apikey=${key}&point=20.93829498370334,106.31359286606312&point=20.937731,106.2880954&point=10.846782687783872,106.78063854904616&point=10.826297759486991,106.72313198776595&point=10.82172487739191,106.70935950759956&sources=0;1&destinations=2;3;4&points_encoded=true`,
+                data: {
+                    zipcode: 97201
+                },
+                success: function (result) {
+                  
+                    //add soure marker
+                    for (let i = 0; i < sources.length; i++) {
+                        L.marker(sources[i]).addTo(map).bindTooltip('Kho ' + (i + 1)).openTooltip()
+                        addTable(result,i)
+                    }
+                    //add destinations marker 
+                    for (let i = 0; i < destinations.length; i++) {
+                        L.marker(destinations[i]).addTo(map).bindTooltip('Điểm đến ' + (i + 1)).openTooltip()
+                    }
+                }
+            });
+        }
+        getMatrix();
+
+        function addTable(data,index) {
+             // Tạo một bảng từ kho 1
+
+            var table = document.createElement('table');
+           
+            // Tạo một hàng đầu tiên (header) cho bảng
+            var headerRow = table.insertRow();
+            var headerCell1 = headerRow.insertCell(0);
+            headerCell1.textContent = 'Kho 1';
+            var headerCell2 = headerRow.insertCell(1);
+            headerCell2.textContent = 'Khoảng cách';
+            var headerCell3 = headerRow.insertCell(2);
+            headerCell3.textContent = 'Thời gian';
+            
+            // Tạo các hàng và cột dữ liệu cho bảng
+            for (var i = 0; i < data.distances[index].length; i++) {
+                var row = table.insertRow();
+                var cell1 = row.insertCell(0);
+                cell1.textContent =  'Điểm đến '+(i+1);
+                var cell2 = row.insertCell(1);
+                cell2.textContent =   data.distances[index][i] + ' km';
+                var cell3 = row.insertCell(2);
+                cell3.textContent = data.durations[index][i]+ ' s';
+               
+            }
+
+            // Gắn bảng vào phần tử container có id là 'table-container'
+            var container = document.getElementById('table-'+(index+1));
+            container.appendChild(table);
+
+
+           
+        }
+    </script>
+</body>
+
+</html>
